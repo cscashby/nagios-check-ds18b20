@@ -5,6 +5,7 @@ Nagios plugin to read and alert on the temperature as detected by a ds18b20 prob
 ### Version History ###
 
 * Version v0.1
+
 Initial version, not much intelligence built into this version but it is functional!
 
 ### How do I get set up? ###
