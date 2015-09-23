@@ -1,9 +1,5 @@
 # README #
 
-### What is this repository for? ###
-
-* Quick summary
-
 Nagios plugin to read and alert on the temperature as detected by a ds18b20 probe.
 
 * Version
@@ -22,4 +18,4 @@ Copy temp.py into the same folder or somewhere on $PYTHONPATH
 
 ### Who do I talk to? ###
 
-* @cscashby 
+* @cscashby
