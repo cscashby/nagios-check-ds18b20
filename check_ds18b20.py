@@ -56,22 +56,22 @@ if cTemp.isError():
 # Good, we have a temperature, we can proceed
 t = cTemp.getCurrentTemp()
 if t > options.HiCritTemp:
-	print "CRITICAL: {0:0.3f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
+	print "CRITICAL: {0:0.1f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
 		t, sensorid, options.HiCritTemp, options.HiWarnTemp)
 	sys.exit(NAGIOS_STATUS['CRITICAL'])
 elif t < options.LoCritTemp:
-	print "CRITICAL: {0:0.3f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
+	print "CRITICAL: {0:0.1f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
 		t, sensorid, options.LoCritTemp, options.LoWarnTemp)
 	sys.exit(NAGIOS_STATUS['CRITICAL'])
 elif t > options.HiWarnTemp:
-	print "WARNING: {0:0.3f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
+	print "WARNING: {0:0.1f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
 		t, sensorid, options.HiCritTemp, options.HiWarnTemp)
 	sys.exit(NAGIOS_STATUS['WARNING'])
 elif t < options.LoWarnTemp:
-	print "WARNING: {0:0.3f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
+	print "WARNING: {0:0.1f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
 		t, sensorid, options.LoCritTemp, options.LoWarnTemp)
 	sys.exit(NAGIOS_STATUS['WARNING'])
 else:
-	print "OK: {0:0.3f}C sensor {1} | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
+	print "OK: {0:0.1f}C sensor {1} | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
 		t, sensorid, options.HiCritTemp, options.HiWarnTemp)
 	sys.exit(NAGIOS_STATUS['OK'])
