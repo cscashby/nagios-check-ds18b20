@@ -15,19 +15,15 @@ from temp import Temp
 NAGIOS_STATUS = { "OK": 0, "WARNING": 1, "CRITICAL": 2, "UNKNOWN": 3 }
 
 parser = optparse.OptionParser()
-parser.set_usage("%prog [options] <sensorID>")
+parser.set_usage("%prog [options] <sensorID>\n\n\tNOTE: for threshold value format see\nhttps://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT")
 parser.add_option("-t", "--timeout", dest="timeout", metavar="TIMEOUT", type="int", default="5",
 	help="Timeout (s) for sensor to return valid data, default is 5s. NOTE, nagios may impose a timeout shorter than this value")
 parser.add_option("-d", "--directory", dest="baseDir", metavar="BASEDIR", type="string", default="/sys/bus/w1/devices",
 	help="Directory for one-wire devices folder, defaults to /sys/bus/w1/devices")
-parser.add_option("-w", "--lowarning", dest="LoWarnTemp", type="float", default="15",
-	help="Warning minimum temperature in deg C, defaults to 25")
-parser.add_option("-c", "--locritical", dest="LoCritTemp", type="float", default="12",
-	help="Critical minimum temperature in deg C, defaults to 35")
-parser.add_option("-W", "--hiwarning", dest="HiWarnTemp", type="float", default="25",
-	help="Warning maximum temperature in deg C, defaults to 25")
-parser.add_option("-C", "--hicritical", dest="HiCritTemp", type="float", default="35",
-	help="Critical maximum temperature in deg C, defaults to 35")
+parser.add_option("-w", "--lowarning", dest="WarnTemp", type="string", default="15:25",
+	help="Warning temperature (min:max) in deg C, defaults to 15:25")
+parser.add_option("-c", "--locritical", dest="CritTemp", type="string", default="12:35",
+	help="Critical temperature (min:max) in deg C, defaults to 12:35")
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -47,6 +43,23 @@ while not cTemp.isReady() and not cTemp.isError():
 		print "UNKNOWN: sensor {0} - timeout reading temperature".format(sensorid)
 		sys.exit(NAGIOS_STATUS['UNKNOWN'])
 
+# Work out threshold range values
+critTemp = options.CritTemp.split(':')
+warnTemp = options.WarnTemp.split(':')
+if len(critTemp) > 1:
+	hiCritTemp = (float(0) if critTemp[1] == "" else float(critTemp[1]) if critTemp[1] != "~" else float('inf'))
+	loCritTemp = (float(0) if critTemp[0] == "" else float(critTemp[0]) if critTemp[0] != "~" else 0-float('inf'))
+else:
+	hiCritTemp = float(critTemp[0]) if critTemp[0] != "~" else float('inf')
+	loCritTemp = float(0)
+	
+if len(warnTemp) > 1:
+	hiWarnTemp = (float(0) if warnTemp[1] == "" else float(warnTemp[1]) if warnTemp[1] != "~" else float('inf'))
+	loWarnTemp = (float(0) if warnTemp[0] == "" else float(warnTemp[0]) if warnTemp[0] != "~" else 0-float('inf'))
+else:
+	hiWarnTemp = float(warnTemp[0]) if warnTemp[0] != "~" else float('inf')
+	loWarnTemp = float(0)
+
 # We could have got here if there was an error, in which case the library writes to stderr
 # but we need to provide nagios with useful status as well
 if cTemp.isError():
@@ -55,23 +68,23 @@ if cTemp.isError():
 
 # Good, we have a temperature, we can proceed
 t = cTemp.getCurrentTemp()
-if t > options.HiCritTemp:
-	print "CRITICAL: {0:0.1f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
-		t, sensorid, options.HiWarnTemp, options.HiCritTemp)
+if t > hiCritTemp:
+	print "CRITICAL: {0:0.1f}C sensor {1} - over temperature {4:0.3f}:{5:0.3f} | temp={0:0.3f};{2};{3}".format(
+		t, sensorid, options.WarnTemp, options.CritTemp, loCritTemp, hiCritTemp)
 	sys.exit(NAGIOS_STATUS['CRITICAL'])
-elif t < options.LoCritTemp:
-	print "CRITICAL: {0:0.1f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
-		t, sensorid, options.HiWarnTemp, options.HiCritTemp)
+elif t < loCritTemp:
+	print "CRITICAL: {0:0.1f}C sensor {1} - under temperature {4:0.3f}:{5:0.3f} | temp={0:0.3f};{2};{3}".format(
+		t, sensorid, options.WarnTemp, options.CritTemp, loCritTemp, hiCritTemp)
 	sys.exit(NAGIOS_STATUS['CRITICAL'])
-elif t > options.HiWarnTemp:
-	print "WARNING: {0:0.1f}C sensor {1} - over temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
-		t, sensorid, options.HiWarnTemp, options.HiCritTemp)
+elif t > hiWarnTemp:
+	print "WARNING: {0:0.1f}C sensor {1} - over temperature {4:0.3f}:{5:0.3f} | temp={0:0.3f};{2};{3}".format(
+		t, sensorid, options.WarnTemp, options.CritTemp, loWarnTemp, hiWarnTemp)
 	sys.exit(NAGIOS_STATUS['WARNING'])
-elif t < options.LoWarnTemp:
-	print "WARNING: {0:0.1f}C sensor {1} - under temperature | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
-		t, sensorid, options.HiWarnTemp, options.HiCritTemp)
+elif t < loWarnTemp:
+	print "WARNING: {0:0.1f}C sensor {1} - under temperature {4:0.3f}:{5:0.3f} | temp={0:0.3f};{2};{3}".format(
+		t, sensorid, options.WarnTemp, options.CritTemp, loWarnTemp, hiWarnTemp)
 	sys.exit(NAGIOS_STATUS['WARNING'])
 else:
-	print "OK: {0:0.1f}C sensor {1} | temp={0:0.3f};{2:0.3f};{3:0.3f}".format(
-		t, sensorid, options.HiWarnTemp, options.HiCritTemp)
+	print "OK: {0:0.1f}C sensor {1} | temp={0:0.3f};{2};{3}".format(
+		t, sensorid, options.WarnTemp, options.CritTemp)
 	sys.exit(NAGIOS_STATUS['OK'])
